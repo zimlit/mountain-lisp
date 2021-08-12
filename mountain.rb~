@@ -1,0 +1,21 @@
+def read(str)
+  str
+end
+
+def eval(exp)
+  exp
+end
+
+def print(str)
+  str
+end
+
+def rep(str)
+  print(eval(read(str)))
+end
+
+while true
+  print "user> "
+  inp = gets.chomp
+  rep(inp)
+end
