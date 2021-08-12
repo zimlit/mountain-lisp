@@ -2,10 +2,14 @@ class List
   attr_accessor :car
   include Enumerable
   
-  def initialize
+  def initialize(arr)
     @car = nil
+
+    arr.each do |y|
+      self.push(y)
+    end
   end
-  def append(value)
+  def push(value)
     if @car
       find_tail.cdr = Node.new(value)
     else
@@ -17,7 +21,7 @@ class List
     return node if !node.cdr
     return node if !node.cdr while (node = node.cdr)
   end
-  def append_after(target, value)
+  def push_after(target, value)
     node           = find(target)
     return unless node
     old_cdr       = node.cdr
@@ -63,10 +67,35 @@ class List
     @car == nil
   end
 
+  def to_ary()
+    x = []
+    self.each do |y|
+      x.push(y)
+    end
+    x
+  end
+
   def each(&block)
     v = @car
+    if v == nil
+      return nil
+    end
     while v.cdr != nil
       block.call(v.value)
+      v = v.cdr
+    end
+    block.call(v.value)
+  end
+
+  def each_index(&block)
+    v = @car
+    i = 0
+    if v == nil
+      return nil
+    end
+    while v.cdr != nil
+      block.call(i)
+      i += 1
       v = v.cdr
     end
     block.call(v.value)
@@ -102,13 +131,23 @@ class Atom
   end
 end
 
+class Vector < Array
+    attr_accessor :meta
+    def conj(xs)
+        self.push(*xs)
+        return self
+    end
+    def seq()
+        return List.new self
+    end
+end
+
+class Hash # re-open and add meta
+    attr_accessor :meta
+end
+
 class String # re-open and add seq
   def seq()
-    list = List.new
-    x = self.split("")
-    x.each do |y|
-      list.append(y)
-    end
-    list
+    list = List.new self.split("")
   end
 end

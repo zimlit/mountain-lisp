@@ -31,24 +31,28 @@ end
 
 def read_form(reader)
   case reader.peek()
-  when "("
-    read_list(reader)
+  when "(" then  read_list(reader, List, "(", ")")
+  when ")" then  raise MountainException, "unexpected ')'"
+  when "[" then  read_list(reader, Vector, "[", "]")
+  when "]" then  raise MountainException, "unexpected ']'" 
+  when "{" then  Hash[read_list(reader, Vector, "{", "}").each_slice(2).to_a]
+  when "}" then  raise MountainException, "unexpected '}'"
   else
     read_atom(reader)
   end
 end
 
-def read_list(reader)
-  ast = List.new
+def read_list(reader, klass, start="(", last=")")
+  ast = klass.new []
   token = reader.next()
-  if token != "("
-    raise MountainException, "expected '('"
+  if token != start
+    raise MountainException, "expected '#{start}'"
   end
-  while (token = reader.peek()) != ")"
+  while (token = reader.peek()) != last
     if not token
-      raise MountainException, "expected ')', got EOF"
+      raise MountainException, "expected '#{last}', got EOF"
     end
-    ast.append(read_form(reader))
+    ast.push(read_form(reader))
   end
   reader.next
   return ast
