@@ -142,6 +142,29 @@ class Vector < Array
     end
 end
 
+class Proc # re-open and add meta
+    attr_accessor :meta
+end
+
+class Function < Proc
+    attr_accessor :ast
+    attr_accessor :env
+    attr_accessor :params
+    attr_accessor :is_macro
+
+    def initialize(ast=nil, env=nil, params=nil, &block)
+        super()
+        @ast = ast
+        @env = env
+        @params = params
+        @is_macro = false
+    end
+
+    def gen_env(args)
+        return Env.new(@env, @params, args)
+    end
+end
+
 class Hash # re-open and add meta
     attr_accessor :meta
 end

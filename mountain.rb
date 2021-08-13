@@ -46,6 +46,7 @@ def eval_ast(ast, env)
 end
 
 def eval(ast, env)
+  while true
     if not ast.is_a? List
         return eval_ast(ast, env)
     end
@@ -68,7 +69,7 @@ def eval(ast, env)
       else
         raise MountainException, "expect variable value"
       end
-      env.set(k, eval(v, env))
+      return env.set(k, eval(v, env))
     when :let
       let_env = Env.new(env)
       
@@ -86,14 +87,11 @@ def eval(ast, env)
       else
         raise MountainException, "expect in section"
       end
-      eval(a2, let_env)
+      env = let_env
+      ast = a2
     when :do
-      r = nil
-      x = ast.drop(1)
-      x.each() do |x|
-        r = eval(x, env)
-      end
-        r
+        eval_ast(ast.to_ary()[1..-2], env)
+        ast = ast.to_ary.last # Continue loop (TCO)
     when :if
 
       if l.car.cdr != nil
@@ -112,9 +110,9 @@ def eval(ast, env)
       cond = eval(a1, env)
       if not cond
         return nil if a3 == nil
-        return eval(a3, env)
+        ast = a3
       else
-        return eval(a2, env)
+        ast = a2
       end
 
     when :fn
@@ -130,15 +128,21 @@ def eval(ast, env)
       else
         raise MountainException, "expect body"
       end
-        return lambda {|*args|
-            eval(a2, Env.new(env, a1.to_ary(), args))
+        return Function.new(a2, env, a1.to_ary) {|*args|
+            EVAL(a2, Env.new(env, a1.to_ary, args))
         }
     else
-      el = eval_ast(ast, env)
-      f = el.car.value
-      f[*el.drop(1)]
+        el = eval_ast(ast, env)
+        f = el.car.value
+        if f.class == Function
+            ast = f.ast
+            env = Env.new(f.env, f.params, el.drop(1))
+        else
+            return f[*el.drop(1)]
+        end
     end
-    end
+  end
+end
 
 def print(str)
   pr_str(str)
